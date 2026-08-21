@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Apply okselenized-dark.json to the current terminal via OSC escapes.
-Run: python3 apply.py   (reset by opening a new terminal tab)"""
+"""Apply an OkSelenized palette to the current terminal via OSC escapes.
+Run: python3 apply.py [dark|black|light]   (reset by opening a new tab)"""
 import json, sys
 from pathlib import Path
 
-d = json.loads((Path(__file__).resolve().parent / "okselenized-dark.json").read_text())
+variant = sys.argv[1] if len(sys.argv) > 1 else "dark"
+d = json.loads((Path(__file__).resolve().parent / f"okselenized-{variant}.json").read_text())
 p = d["palette"]
 out = []
 for i, name in enumerate(d["ansi"]):

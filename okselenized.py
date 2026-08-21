@@ -1,32 +1,17 @@
-"""Generate the OkSelenized dark palette.
+"""Generate the OkSelenized palettes (dark, black, light).
 
-Selenized dark re-derived in OKLCH: Selenized's hues, lightness ladder and
-bright-accent tier, with all accents pinned to one uniform Oklab lightness
-(the OkSolar idea) and chroma clamped to the sRGB gamut.
+Selenized re-derived in OKLCH: Selenized's hues, lightness ladders and
+bright-accent tiers, with all accents pinned to one uniform Oklab lightness
+per variant (the OkSolar idea) and chroma clamped to the sRGB gamut.
 
-Outputs okselenized-dark.json and preview.html next to this script.
+Outputs okselenized-<variant>.json / .minttyrc and preview.html.
 """
 import json
 import math
 import os
 
-# ---- knobs -----------------------------------------------------------------
-ACCENT_L = 67.0   # ponytail: uniform accent lightness; raise for airier accents
-                  # at the cost of red/magenta chroma (gamut shrinks with L)
-BR_DELTA = 4.5    # bright tier = ACCENT_L + BR_DELTA (Selenized's measured gap)
-MONO_HUE = 220.0  # hue of all monotones (Selenized's teal-blue background)
-
-# Selenized dark, measured in OKLCH: (L, C, H). Hues/chromas are kept,
-# accent L is replaced by ACCENT_L, monotone hue snapped to MONO_HUE.
-MONOTONES = {  # name: (L, C)
-    "bg_0":  (33.2, 0.040),
-    "bg_1":  (37.6, 0.040),
-    "bg_2":  (44.7, 0.037),
-    "dim_0": (62.5, 0.020),
-    "fg_0":  (79.2, 0.012),
-    "fg_1":  (87.5, 0.010),
-}
-ACCENT_HUES = {  # name: (C, H) from Selenized dark
+# Accent hues and base chroma, shared by all variants (from Selenized dark).
+ACCENT_HUES = {  # name: (C, H)
     "red":     (0.187, 26.4),
     "orange":  (0.135, 49.4),
     "yellow":  (0.135, 90.9),
@@ -36,6 +21,44 @@ ACCENT_HUES = {  # name: (C, H) from Selenized dark
     "violet":  (0.135, 300.9),
     "magenta": (0.155, 346.2),
 }
+
+# Per-variant design tables, anchored on the corresponding Selenized variant
+# measured in OKLCH. monotones: name -> (L, C, H). accent_l is the uniform
+# Oklab accent lightness (ponytail: the calibration knob — raising it gives
+# airier accents but shrinks sRGB gamut for red/magenta). br_delta is the
+# bright tier's lightness offset (negative on light: brighter == darker
+# there). floors are WCAG minimums, chosen to match or beat Selenized.
+VARIANTS = {
+    "dark": dict(
+        monotones={"bg_0": (33.2, 0.040, 220), "bg_1": (37.6, 0.040, 220),
+                   "bg_2": (44.7, 0.037, 220), "dim_0": (62.5, 0.020, 220),
+                   "fg_0": (79.2, 0.012, 220), "fg_1": (87.5, 0.010, 220)},
+        accent_l=67.0, br_delta=4.5, chroma_scale=1.0,
+        floors=dict(fg=6.0, dim=3.2, accent=3.5),
+    ),
+    "black": dict(  # neutral near-black monotones, accents slightly darker
+        monotones={"bg_0": (21.0, 0.0, 220), "bg_1": (26.5, 0.0, 220),
+                   "bg_2": (35.0, 0.0, 220), "dim_0": (57.0, 0.0, 220),
+                   "fg_0": (78.5, 0.0, 220), "fg_1": (90.0, 0.0, 220)},
+        accent_l=65.0, br_delta=4.5, chroma_scale=1.0,
+        floors=dict(fg=8.5, dim=3.9, accent=4.0),
+    ),
+    "light": dict(  # cream backgrounds, teal foregrounds, accents darker
+        monotones={"bg_0": (96.4, 0.033, 90), "bg_1": (91.7, 0.032, 90),
+                   "bg_2": (84.9, 0.032, 90), "dim_0": (67.4, 0.012, 168),
+                   "fg_0": (50.0, 0.026, 220), "fg_1": (40.7, 0.026, 220)},
+        accent_l=58.0, br_delta=-2.0, chroma_scale=1.25,
+        floors=dict(fg=5.3, dim=2.6, accent=3.4),
+    ),
+}
+
+# Conventional ANSI mapping (Selenized's scheme: no gray in a bright slot).
+ANSI = ["bg_1", "red", "green", "yellow", "blue", "magenta", "cyan", "dim_0",
+        "bg_2", "br_red", "br_green", "br_yellow", "br_blue", "br_magenta",
+        "br_cyan", "fg_1"]
+MINTTY = ["Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan",
+          "White", "BoldBlack", "BoldRed", "BoldGreen", "BoldYellow",
+          "BoldBlue", "BoldMagenta", "BoldCyan", "BoldWhite"]
 
 # ---- OKLCH -> sRGB ----------------------------------------------------------
 def oklch_to_rgb(L, C, H):
@@ -49,8 +72,7 @@ def oklch_to_rgb(L, C, H):
     g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
     bb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
     def enc(c):
-        c = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
-        return c
+        return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
     return tuple(enc(c) for c in (r, g, bb))
 
 def in_gamut(rgb, eps=1e-4):
@@ -77,20 +99,6 @@ def make(L, C, H):
     return {"hex": to_hex(oklch_to_rgb(L / 100, C, H)),
             "oklch": [round(L, 1), round(C, 3), round(H, 1)]}
 
-# ---- build ------------------------------------------------------------------
-palette = {}
-for name, (L, C) in MONOTONES.items():
-    palette[name] = make(L, C, MONO_HUE)
-for name, (C, H) in ACCENT_HUES.items():
-    palette[name] = make(ACCENT_L, C, H)
-    palette["br_" + name] = make(ACCENT_L + BR_DELTA, C, H)
-
-# Conventional ANSI mapping (Selenized's scheme: no gray in a bright slot).
-ANSI = ["bg_1", "red", "green", "yellow", "blue", "magenta", "cyan", "dim_0",
-        "bg_2", "br_red", "br_green", "br_yellow", "br_blue", "br_magenta",
-        "br_cyan", "fg_1"]
-
-# ---- checks -----------------------------------------------------------------
 def wcag(fg_hex, bg_hex):
     def lum(h):
         r, g, b = (int(h[i:i + 2], 16) / 255 for i in (1, 3, 5))
@@ -100,53 +108,73 @@ def wcag(fg_hex, bg_hex):
     l1, l2 = sorted((lum(fg_hex), lum(bg_hex)), reverse=True)
     return (l1 + 0.05) / (l2 + 0.05)
 
-bg = palette["bg_0"]["hex"]
-assert wcag(palette["fg_0"]["hex"], bg) >= 6.0, "main text below Selenized's 6.07"
-assert wcag(palette["dim_0"]["hex"], bg) >= 3.2, "comments below Selenized's 3.23"
-for n in ACCENT_HUES:
-    assert palette[n]["oklch"][0] == ACCENT_L, "accent L not uniform"
-    assert wcag(palette[n]["hex"], bg) >= 3.5, f"{n} accent contrast too low"
-    assert palette["br_" + n]["oklch"][0] > palette[n]["oklch"][0]
-assert len(set(ANSI)) == 16 and all(n in palette for n in ANSI)
+# ---- build ------------------------------------------------------------------
+def build(spec):
+    palette = {}
+    for name, (L, C, H) in spec["monotones"].items():
+        palette[name] = make(L, C, H)
+    for name, (C, H) in ACCENT_HUES.items():
+        C *= spec["chroma_scale"]
+        palette[name] = make(spec["accent_l"], C, H)
+        palette["br_" + name] = make(spec["accent_l"] + spec["br_delta"], C, H)
+    return palette
 
-# ---- output -----------------------------------------------------------------
+def check(palette, spec):
+    bg, floors = palette["bg_0"]["hex"], spec["floors"]
+    assert wcag(palette["fg_0"]["hex"], bg) >= floors["fg"], "main text contrast"
+    assert wcag(palette["dim_0"]["hex"], bg) >= floors["dim"], "comment contrast"
+    sign = 1 if spec["br_delta"] > 0 else -1
+    for n in ACCENT_HUES:
+        assert palette[n]["oklch"][0] == spec["accent_l"], "accent L not uniform"
+        assert wcag(palette[n]["hex"], bg) >= floors["accent"], f"{n} contrast"
+        d = palette["br_" + n]["oklch"][0] - palette[n]["oklch"][0]
+        assert d * sign > 0, "bright tier on wrong side"
+    assert len(set(ANSI)) == 16 and all(n in palette for n in ANSI)
+
 here = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(here, "okselenized-dark.json"), "w", newline="\n") as f:
-    json.dump({"name": "OkSelenized dark", "palette": palette, "ansi": ANSI},
-              f, indent=2)
+previews = []
+for variant, spec in VARIANTS.items():
+    palette = build(spec)
+    check(palette, spec)
+    with open(os.path.join(here, f"okselenized-{variant}.json"), "w",
+              newline="\n") as f:
+        json.dump({"name": f"OkSelenized {variant}", "palette": palette,
+                   "ansi": ANSI}, f, indent=2)
+    with open(os.path.join(here, f"okselenized-{variant}.minttyrc"), "w",
+              newline="\n") as f:
+        f.write(f"# OkSelenized {variant} - append to ~/.minttyrc\n"
+                f"ForegroundColour={palette['fg_0']['hex']}\n"
+                f"BackgroundColour={palette['bg_0']['hex']}\n"
+                f"CursorColour={palette['fg_1']['hex']}\n")
+        for mname, slot in zip(MINTTY, ANSI):
+            f.write(f"{mname}={palette[slot]['hex']}\n")
 
-print(f"{'name':12} {'hex':>8}   {'L':>5} {'C':>6} {'H':>6}   {'WCAG on bg_0':>12}")
-for name, v in palette.items():
-    L, C, H = v["oklch"]
-    print(f"{name:12} {v['hex']:>8}   {L:5.1f} {C:6.3f} {H:6.1f}   {wcag(v['hex'], bg):12.2f}")
+    bg = palette["bg_0"]["hex"]
+    print(f"== {variant} ==")
+    print(f"{'name':12} {'hex':>8}   {'L':>5} {'C':>6} {'H':>6}   {'WCAG on bg_0':>12}")
+    for name, v in palette.items():
+        L, C, H = v["oklch"]
+        print(f"{name:12} {v['hex']:>8}   {L:5.1f} {C:6.3f} {H:6.1f}"
+              f"   {wcag(v['hex'], bg):12.2f}")
 
-# mintty (Cygwin/MSYS2) color scheme — append to ~/.minttyrc
-MINTTY = ["Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan",
-          "White", "BoldBlack", "BoldRed", "BoldGreen", "BoldYellow",
-          "BoldBlue", "BoldMagenta", "BoldCyan", "BoldWhite"]
-with open(os.path.join(here, "okselenized.minttyrc"), "w", newline="\n") as f:
-    f.write(f"# OkSelenized dark - append to ~/.minttyrc\n"
-            f"ForegroundColour={palette['fg_0']['hex']}\n"
-            f"BackgroundColour={palette['bg_0']['hex']}\n"
-            f"CursorColour={palette['fg_1']['hex']}\n")
-    for mname, slot in zip(MINTTY, ANSI):
-        f.write(f"{mname}={palette[slot]['hex']}\n")
+    sw = "".join(
+        f'<div><span style="background:{v["hex"]}"></span>{n}'
+        f'<code>{v["hex"]}</code></div>' for n, v in palette.items())
+    p = palette
+    previews.append(f"""<h2>OkSelenized {variant}</h2>
+<pre style="background:{bg};color:{p['fg_0']['hex']};padding:1em">
+<span style="color:{p['dim_0']['hex']}"># comment: ls output below uses normal + bright ANSI slots</span>
+<span style="color:{p['blue']['hex']}">drwxr-xr-x</span>  <span style="color:{p['br_blue']['hex']}">bin/</span>   <span style="color:{p['green']['hex']}">OK</span> <span style="color:{p['br_green']['hex']}">OK-bright</span>
+<span style="color:{p['red']['hex']}">error:</span> <span style="color:{p['br_red']['hex']}">bright error</span>  <span style="color:{p['yellow']['hex']}">warn</span> <span style="color:{p['br_yellow']['hex']}">bright warn</span>
+<span style="color:{p['magenta']['hex']}">magenta</span> <span style="color:{p['violet']['hex']}">violet</span> <span style="color:{p['cyan']['hex']}">cyan</span> <span style="color:{p['orange']['hex']}">orange</span>
+<span style="color:{p['fg_1']['hex']};font-weight:bold">emphasized text</span> on bg_0
+</pre>{sw}""")
 
-# minimal visual preview
-sw = "".join(
-    f'<div><span style="background:{v["hex"]}"></span>{n}<code>{v["hex"]}</code></div>'
-    for n, v in palette.items())
-term = f"""<pre style="background:{bg};color:{palette['fg_0']['hex']};padding:1em">
-<span style="color:{palette['dim_0']['hex']}"># comment: ls output below uses normal + bright ANSI slots</span>
-<span style="color:{palette['blue']['hex']}">drwxr-xr-x</span>  <span style="color:{palette['br_blue']['hex']}">bin/</span>   <span style="color:{palette['green']['hex']}">OK</span> <span style="color:{palette['br_green']['hex']}">OK-bright</span>
-<span style="color:{palette['red']['hex']}">error:</span> <span style="color:{palette['br_red']['hex']}">bright error</span>  <span style="color:{palette['yellow']['hex']}">warn</span> <span style="color:{palette['br_yellow']['hex']}">bright warn</span>
-<span style="color:{palette['magenta']['hex']}">magenta</span> <span style="color:{palette['violet']['hex']}">violet</span> <span style="color:{palette['cyan']['hex']}">cyan</span> <span style="color:{palette['orange']['hex']}">orange</span>
-<span style="color:{palette['fg_1']['hex']};font-weight:bold">emphasized text</span> on bg_0
-</pre>"""
 with open(os.path.join(here, "preview.html"), "w", newline="\n") as f:
-    f.write(f"""<title>OkSelenized dark</title>
-<style>body{{font-family:monospace;background:#1a1a1a;color:#ccc;margin:2em}}
-div span{{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margin-right:.6em}}
-code{{margin-left:.6em;color:#888}}</style>
-<h2>OkSelenized dark</h2>{term}{sw}""")
-print("\nwrote okselenized-dark.json, okselenized.minttyrc, preview.html")
+    f.write("""<title>OkSelenized</title>
+<style>body{font-family:monospace;background:#1a1a1a;color:#ccc;margin:2em}
+div span{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margin-right:.6em}
+code{margin-left:.6em;color:#888}</style>
+""" + "".join(previews))
+
+print("\nwrote okselenized-{dark,black,light}.{json,minttyrc}, preview.html")

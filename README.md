@@ -18,6 +18,11 @@ OkSelenized combines both:
 | Real bright accent tier (`br_*`, +4.5 L) and a conventional ANSI 0–15 mapping — no gray repurposed into a bright slot | Selenized |
 | Contrast floors: main text ≥ 6.0 WCAG, comments ≥ 3.2, every accent ≥ 3.5 (enforced by asserts) | Selenized |
 
+Three variants: **dark** (teal background, Oklab L 33), **black** (neutral
+near-black, L 21, for OLED / dark rooms), **light** (cream background, L 96,
+accents darker than background with an inverted bright tier). Hex values for
+black and light are in their JSON files.
+
 ## Palette (dark)
 
 | Name | Hex | OKLCH (L C H) | | Name | Hex | OKLCH (L C H) |
@@ -42,12 +47,14 @@ br_red, br_green, br_yellow, br_blue, br_magenta, br_cyan, fg_1`
   in OKLCH, not hand-picked; hex values are derived output. Runs its own
   checks (uniform accent L, WCAG floors, sRGB gamut, valid ANSI map) and
   fails loudly if a knob change breaks them.
-- `okselenized-dark.json` — generated palette + ANSI mapping (hex and OKLCH).
-- `preview.html` — generated swatches + mock terminal output.
-- `apply.py` — applies the palette to the current terminal via OSC escapes
-  (no config edits; resets with a new tab).
-- `okselenized.minttyrc` — generated mintty color scheme for Cygwin/MSYS2
-  (see below).
+- `okselenized-{dark,black,light}.json` — generated palettes + ANSI mapping
+  (hex and OKLCH).
+- `preview.html` — generated swatches + mock terminal output, all variants.
+- `apply.py` — applies a palette to the current terminal via OSC escapes:
+  `python3 apply.py [dark|black|light]` (no config edits; resets with a new
+  tab — handy for A/B-ing the variants live).
+- `okselenized-{dark,black,light}.minttyrc` — generated mintty color schemes
+  for Cygwin/MSYS2 (see below).
 - `okselenized.rc` — app tweaks to source from your shell rc (see below).
 - `aptitude.config` — aptitude styles for `~/.aptitude/config` (see below).
 
@@ -85,12 +92,12 @@ Two knobs at the top of `okselenized.py`:
 
 ### Cygwin / MSYS2 (mintty)
 
-For the running session, `python3 apply.py` works as-is — mintty supports
-the OSC sequences. To make it permanent, append `okselenized.minttyrc` to
-your config:
+For the running session, `python3 apply.py [dark|black|light]` works as-is —
+mintty supports the OSC sequences. To make one variant permanent, append its
+minttyrc to your config:
 
 ```sh
-cat okselenized.minttyrc >> ~/.minttyrc
+cat okselenized-dark.minttyrc >> ~/.minttyrc
 ```
 
 New mintty windows pick it up on start.
@@ -121,9 +128,9 @@ settings live in `okselenized.rc`, source it from your shell rc:
 
 ## Status / not yet done
 
-- Only the **dark** variant exists. Light / black / white follow by swapping
-  the `MONOTONES` table (and for light, placing accents *below* background
-  lightness, as Selenized does).
+- Variants: dark, black and light exist; Selenized's **white**
+  (pure-white background, maximum contrast) would be one more entry in the
+  `VARIANTS` table.
 - Shipped so far: live application via `apply.py` (any OSC-capable terminal)
   and a mintty config. Static configs for foot / alacritty / kitty and
   editor themes (vim, VS Code, …) are not written yet — all derivable from

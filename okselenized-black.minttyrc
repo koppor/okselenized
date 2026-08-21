@@ -1,0 +1,20 @@
+# OkSelenized black - append to ~/.minttyrc
+ForegroundColour=#b9b9b9
+BackgroundColour=#181818
+CursorColour=#dedede
+Black=#252525
+Red=#eb554e
+Green=#6aa13d
+Yellow=#ae8b00
+Blue=#4a90e8
+Magenta=#d063a3
+Cyan=#1aa598
+White=#777777
+BoldBlack=#3a3a3a
+BoldRed=#fc645b
+BoldGreen=#78b04b
+BoldYellow=#bc991d
+BoldBlue=#589ef8
+BoldMagenta=#df71b1
+BoldCyan=#32b3a6
+BoldWhite=#dedede
