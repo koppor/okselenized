@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Apply an OkSelenized palette to the current terminal via OSC escapes.
-Run: python3 apply.py [dark|black|light]   (reset by opening a new tab)"""
+Run: python3 apply.py <variant>   (reset by opening a new tab)"""
 import json, sys
 from pathlib import Path
 
-variant = sys.argv[1] if len(sys.argv) > 1 else "dark"
-d = json.loads((Path(__file__).resolve().parent / f"okselenized-{variant}.json").read_text())
+here = Path(__file__).resolve().parent
+variants = sorted(p.stem.removeprefix("okselenized-")
+                  for p in here.glob("okselenized-*.json"))
+if len(sys.argv) != 2 or sys.argv[1] not in variants:
+    sys.exit(f"usage: python3 apply.py {{{'|'.join(variants)}}}")
+d = json.loads((here / f"okselenized-{sys.argv[1]}.json").read_text())
 p = d["palette"]
 out = []
 for i, name in enumerate(d["ansi"]):

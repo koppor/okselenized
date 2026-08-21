@@ -51,8 +51,9 @@ br_red, br_green, br_yellow, br_blue, br_magenta, br_cyan, fg_1`
   (hex and OKLCH).
 - `preview.html` — generated swatches + mock terminal output, all variants.
 - `apply.py` — applies a palette to the current terminal via OSC escapes:
-  `python3 apply.py [dark|black|light]` (no config edits; resets with a new
-  tab — handy for A/B-ing the variants live).
+  `python3 apply.py {black|dark|light}`; run without arguments to list the
+  available variants (no config edits; resets with a new tab — handy for
+  A/B-ing the variants live).
 - `okselenized-{dark,black,light}.minttyrc` — generated mintty color schemes
   for Cygwin/MSYS2 (see below).
 - `okselenized.rc` — app tweaks to source from your shell rc (see below).
@@ -92,7 +93,7 @@ Two knobs at the top of `okselenized.py`:
 
 ### Cygwin / MSYS2 (mintty)
 
-For the running session, `python3 apply.py [dark|black|light]` works as-is —
+For the running session, `python3 apply.py {black|dark|light}` works as-is —
 mintty supports the OSC sequences. To make one variant permanent, append its
 minttyrc to your config:
 
