@@ -1,0 +1,38 @@
+# OkSelenized app tweaks — source from .bashrc/.zshrc:
+#   . /path/to/okselenized.rc
+
+# mc's default skin uses ANSI blue as panel background — glaring with any
+# lightness-normalized palette. This skin uses the 16 terminal colors and
+# keeps the terminal background.
+export MC_SKIN=modarcon16-defbg
+
+# newt/whiptail dialogs (debconf, needrestart, ...) default to white-on-blue —
+# same problem. Remap onto this palette's slot semantics:
+# black=bg_1, gray=bg_2, lightgray=dim_0, white=fg_1, cyan=accent.
+# Adapted from https://github.com/jan-warchol/selenized/issues/130
+# Test with: whiptail --msgbox test 10 40
+export NEWT_COLORS='
+root=lightgray,black
+roottext=lightgray,black
+shadow=,black
+window=lightgray,gray
+border=white,gray
+title=white,gray
+textbox=lightgray,gray
+acttextbox=black,cyan
+button=black,cyan
+actbutton=white,gray
+compactbutton=lightgray,gray
+checkbox=lightgray,gray
+actcheckbox=black,cyan
+entry=white,black
+disentry=lightgray,black
+label=lightgray,gray
+listbox=lightgray,gray
+actlistbox=white,gray
+sellistbox=black,cyan
+actsellistbox=black,cyan
+helpline=lightgray,black
+emptyscale=,black
+fullscale=,cyan
+'

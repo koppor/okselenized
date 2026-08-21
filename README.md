@@ -44,6 +44,10 @@ br_red, br_green, br_yellow, br_blue, br_magenta, br_cyan, fg_1`
   fails loudly if a knob change breaks them.
 - `okselenized-dark.json` — generated palette + ANSI mapping (hex and OKLCH).
 - `preview.html` — generated swatches + mock terminal output.
+- `apply.py` — applies the palette to the current terminal via OSC escapes
+  (no config edits; resets with a new tab).
+- `okselenized.rc` — app tweaks to source from your shell rc (see below).
+- `aptitude.config` — aptitude styles for `~/.aptitude/config` (see below).
 
 Regenerate everything with:
 
@@ -74,6 +78,30 @@ Two knobs at the top of `okselenized.py`:
    bright variants (e.g. `grep --color`, htop). The specific claims to
    verify: bright slots render as brighter accents (not gray), green reads
    as green rather than olive, and comments (`dim_0`) stay legible.
+
+## Configuration for apps
+
+Most apps need nothing — they use ANSI colors as foregrounds and just work.
+A few use accent colors as large backgrounds and need a nudge; these
+settings live in `okselenized.rc`, source it from your shell rc:
+
+```sh
+. /path/to/okselenized.rc
+```
+
+- **mc** — the default skin paints panels with ANSI blue as background
+  (glaring with any lightness-normalized palette, Selenized included).
+  `okselenized.rc` sets `MC_SKIN=modarcon16-defbg`, which uses the 16
+  terminal colors on the terminal's own background.
+- **newt/whiptail** (debconf, needrestart, …) — dialogs default to
+  white-on-blue. `okselenized.rc` sets `NEWT_COLORS` remapped onto this
+  palette's slot semantics (adapted from
+  [selenized#130](https://github.com/jan-warchol/selenized/issues/130)).
+  Test with `whiptail --msgbox test 10 40`.
+- **aptitude** — defaults to white-on-blue menu/header bars, ~1.2:1
+  contrast here ([selenized#32](https://github.com/jan-warchol/selenized/issues/32)).
+  Can't be fixed via environment: copy `aptitude.config` to
+  `~/.aptitude/config` (or merge it into your existing one).
 
 ## Status / not yet done
 
