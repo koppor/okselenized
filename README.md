@@ -122,6 +122,17 @@ settings live in `okselenized.rc`, source it from your shell rc:
   palette's slot semantics (adapted from
   [selenized#130](https://github.com/jan-warchol/selenized/issues/130)).
   Test with `whiptail --msgbox test 10 40`.
+- **oh-my-bash** — `okselenized.theme.sh` is a prompt theme based on
+  [duru](https://github.com/ohmybash/oh-my-bash/wiki/Themes#copied-duru),
+  showing the full working directory instead of the last two components.
+  Colors are ANSI slots, so it follows the applied variant. Install:
+
+  ```sh
+  mkdir -p ~/.oh-my-bash/custom/themes/okselenized
+  cp okselenized.theme.sh ~/.oh-my-bash/custom/themes/okselenized/
+  # then in ~/.bashrc: OSH_THEME="okselenized"
+  ```
+
 - **aptitude** — defaults to white-on-blue menu/header bars, ~1.2:1
   contrast here ([selenized#32](https://github.com/jan-warchol/selenized/issues/32)).
   Can't be fixed via environment: copy `aptitude.config` to
