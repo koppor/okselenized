@@ -2,8 +2,9 @@
 """Apply okselenized-dark.json to the current terminal via OSC escapes.
 Run: python3 apply.py   (reset by opening a new terminal tab)"""
 import json, sys
+from pathlib import Path
 
-d = json.load(open("okselenized-dark.json"))
+d = json.loads((Path(__file__).resolve().parent / "okselenized-dark.json").read_text())
 p = d["palette"]
 out = []
 for i, name in enumerate(d["ansi"]):

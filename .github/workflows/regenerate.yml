@@ -1,0 +1,29 @@
+name: Regenerate palette files
+
+# Keeps the generated files (json, minttyrc, preview) in sync with the
+# generator. Pushes with GITHUB_TOKEN don't retrigger workflows, and the
+# paths filter only watches the generator itself — no loop.
+on:
+  push:
+    branches: [main]
+    paths: [okselenized.py]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 okselenized.py
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898782+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || {
+            git commit -m "Regenerate palette files"
+            git push
+          }

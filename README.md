@@ -46,6 +46,8 @@ br_red, br_green, br_yellow, br_blue, br_magenta, br_cyan, fg_1`
 - `preview.html` — generated swatches + mock terminal output.
 - `apply.py` — applies the palette to the current terminal via OSC escapes
   (no config edits; resets with a new tab).
+- `okselenized.minttyrc` — generated mintty color scheme for Cygwin/MSYS2
+  (see below).
 - `okselenized.rc` — app tweaks to source from your shell rc (see below).
 - `aptitude.config` — aptitude styles for `~/.aptitude/config` (see below).
 
@@ -55,7 +57,9 @@ Regenerate everything with:
 python3 okselenized.py
 ```
 
-No dependencies beyond the Python standard library.
+No dependencies beyond the Python standard library. The generated files are
+kept in sync automatically: a GitHub workflow reruns the generator on every
+push that touches `okselenized.py` and commits the result.
 
 ## Tuning
 
@@ -78,6 +82,18 @@ Two knobs at the top of `okselenized.py`:
    bright variants (e.g. `grep --color`, htop). The specific claims to
    verify: bright slots render as brighter accents (not gray), green reads
    as green rather than olive, and comments (`dim_0`) stay legible.
+
+### Cygwin / MSYS2 (mintty)
+
+For the running session, `python3 apply.py` works as-is — mintty supports
+the OSC sequences. To make it permanent, append `okselenized.minttyrc` to
+your config:
+
+```sh
+cat okselenized.minttyrc >> ~/.minttyrc
+```
+
+New mintty windows pick it up on start.
 
 ## Configuration for apps
 
@@ -108,7 +124,10 @@ settings live in `okselenized.rc`, source it from your shell rc:
 - Only the **dark** variant exists. Light / black / white follow by swapping
   the `MONOTONES` table (and for light, placing accents *below* background
   lightness, as Selenized does).
-- No shipped terminal/editor configs yet — generate from the JSON.
+- Shipped so far: live application via `apply.py` (any OSC-capable terminal)
+  and a mintty config. Static configs for foot / alacritty / kitty and
+  editor themes (vim, VS Code, …) are not written yet — all derivable from
+  `okselenized-dark.json`.
 
 ## Credits
 

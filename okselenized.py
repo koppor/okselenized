@@ -111,7 +111,7 @@ assert len(set(ANSI)) == 16 and all(n in palette for n in ANSI)
 
 # ---- output -----------------------------------------------------------------
 here = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(here, "okselenized-dark.json"), "w") as f:
+with open(os.path.join(here, "okselenized-dark.json"), "w", newline="\n") as f:
     json.dump({"name": "OkSelenized dark", "palette": palette, "ansi": ANSI},
               f, indent=2)
 
@@ -119,6 +119,18 @@ print(f"{'name':12} {'hex':>8}   {'L':>5} {'C':>6} {'H':>6}   {'WCAG on bg_0':>1
 for name, v in palette.items():
     L, C, H = v["oklch"]
     print(f"{name:12} {v['hex']:>8}   {L:5.1f} {C:6.3f} {H:6.1f}   {wcag(v['hex'], bg):12.2f}")
+
+# mintty (Cygwin/MSYS2) color scheme — append to ~/.minttyrc
+MINTTY = ["Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan",
+          "White", "BoldBlack", "BoldRed", "BoldGreen", "BoldYellow",
+          "BoldBlue", "BoldMagenta", "BoldCyan", "BoldWhite"]
+with open(os.path.join(here, "okselenized.minttyrc"), "w", newline="\n") as f:
+    f.write(f"# OkSelenized dark - append to ~/.minttyrc\n"
+            f"ForegroundColour={palette['fg_0']['hex']}\n"
+            f"BackgroundColour={palette['bg_0']['hex']}\n"
+            f"CursorColour={palette['fg_1']['hex']}\n")
+    for mname, slot in zip(MINTTY, ANSI):
+        f.write(f"{mname}={palette[slot]['hex']}\n")
 
 # minimal visual preview
 sw = "".join(
@@ -131,10 +143,10 @@ term = f"""<pre style="background:{bg};color:{palette['fg_0']['hex']};padding:1e
 <span style="color:{palette['magenta']['hex']}">magenta</span> <span style="color:{palette['violet']['hex']}">violet</span> <span style="color:{palette['cyan']['hex']}">cyan</span> <span style="color:{palette['orange']['hex']}">orange</span>
 <span style="color:{palette['fg_1']['hex']};font-weight:bold">emphasized text</span> on bg_0
 </pre>"""
-with open(os.path.join(here, "preview.html"), "w") as f:
+with open(os.path.join(here, "preview.html"), "w", newline="\n") as f:
     f.write(f"""<title>OkSelenized dark</title>
 <style>body{{font-family:monospace;background:#1a1a1a;color:#ccc;margin:2em}}
 div span{{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margin-right:.6em}}
 code{{margin-left:.6em;color:#888}}</style>
 <h2>OkSelenized dark</h2>{term}{sw}""")
-print("\nwrote okselenized-dark.json, preview.html")
+print("\nwrote okselenized-dark.json, okselenized.minttyrc, preview.html")
