@@ -1,7 +1,8 @@
 #! bash oh-my-bash.module
 # OkSelenized prompt theme for oh-my-bash, based on duru
 # (https://github.com/ohmybash/oh-my-bash/wiki/Themes#copied-duru)
-# with the full working directory instead of the last two dirs.
+# with the full working directory (home spelled out, no ~) instead of
+# the last two dirs.
 #
 # Colors are ANSI slot references, so the prompt renders in whatever
 # OkSelenized variant (dark/black/light) the terminal has applied.
@@ -23,7 +24,7 @@ function venv {
 }
 
 function _omb_theme_PROMPT_COMMAND {
-  PS1="${_omb_prompt_olive}# ${_omb_prompt_reset_color}\w$(scm_prompt_info)${_omb_prompt_reset_color}$(venv)${_omb_prompt_reset_color} ${_omb_prompt_teal}\n> ${_omb_prompt_reset_color}"
+  PS1="${_omb_prompt_olive}# ${_omb_prompt_reset_color}$PWD$(scm_prompt_info)${_omb_prompt_reset_color}$(venv)${_omb_prompt_reset_color} ${_omb_prompt_teal}\n> ${_omb_prompt_reset_color}"
 }
 
 _omb_util_add_prompt_command _omb_theme_PROMPT_COMMAND
