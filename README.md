@@ -3,7 +3,7 @@
 [Selenized](https://github.com/jan-warchol/selenized) re-derived in the
 [Oklab](https://bottosson.github.io/posts/oklab/) color space — the theme
 [OkSolar](https://meat.io/oksolar) would have been if it had started from
-Selenized instead of Solarized.
+Selenized instead of [Solarized](https://ethanschoonover.com/solarized/).
 
 Motivation: [jan-warchol/selenized#121](https://github.com/jan-warchol/selenized/issues/121).
 Analysis showed OkSolar keeps only one of Selenized's improvements over
@@ -150,6 +150,7 @@ settings live in `okselenized.rc`, source it from your shell rc:
 
 ## Credits
 
+- [Solarized](https://ethanschoonover.com/solarized/) by Ethan Schoonover — the original design this whole lineage descends from (MIT).
 - [Selenized](https://github.com/jan-warchol/selenized) by Jan Warchoł — hues, lightness ladder, contrast targets, ANSI scheme (MIT).
 - [OkSolar](https://meat.io/oksolar) — the uniform-Oklab-lightness idea.
 - [Oklab](https://bottosson.github.io/posts/oklab/) by Björn Ottosson — the color space (conversion matrices, public domain).
