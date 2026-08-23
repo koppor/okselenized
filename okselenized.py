@@ -132,15 +132,18 @@ def check(palette, spec):
     assert len(set(ANSI)) == 16 and all(n in palette for n in ANSI)
 
 here = os.path.dirname(os.path.abspath(__file__))
+confdir = os.path.join(here, "configurations")
+os.makedirs(confdir, exist_ok=True)
 previews = []
+palettes = {}
 for variant, spec in VARIANTS.items():
-    palette = build(spec)
+    palette = palettes[variant] = build(spec)
     check(palette, spec)
     with open(os.path.join(here, f"okselenized-{variant}.json"), "w",
               newline="\n") as f:
         json.dump({"name": f"OkSelenized {variant}", "palette": palette,
                    "ansi": ANSI}, f, indent=2)
-    with open(os.path.join(here, f"okselenized-{variant}.minttyrc"), "w",
+    with open(os.path.join(confdir, f"okselenized-{variant}.minttyrc"), "w",
               newline="\n") as f:
         f.write(f"# OkSelenized {variant} - append to ~/.minttyrc\n"
                 f"ForegroundColour={palette['fg_0']['hex']}\n"
@@ -177,4 +180,60 @@ div span{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margi
 code{margin-left:.6em;color:#888}</style>
 """ + "".join(previews))
 
-print("\nwrote okselenized-{dark,black,light}.{json,minttyrc}, preview.html")
+# Windows Terminal: paste the schemes into settings.json "schemes".
+WT_KEYS = ["black", "red", "green", "yellow", "blue", "purple", "cyan",
+           "white", "brightBlack", "brightRed", "brightGreen", "brightYellow",
+           "brightBlue", "brightPurple", "brightCyan", "brightWhite"]
+schemes = []
+for variant, pal in palettes.items():
+    s = {"name": f"OkSelenized {variant}",
+         "background": pal["bg_0"]["hex"], "foreground": pal["fg_0"]["hex"],
+         "cursorColor": pal["fg_1"]["hex"],
+         "selectionBackground": pal["bg_2"]["hex"]}
+    s.update((k, pal[slot]["hex"]) for k, slot in zip(WT_KEYS, ANSI))
+    schemes.append(s)
+with open(os.path.join(confdir, "windows-terminal.json"), "w",
+          newline="\n") as f:
+    json.dump({"schemes": schemes}, f, indent=2)
+
+# IntelliJ editor color scheme (.icls). Language schemes inherit from the
+# DEFAULT_* attributes, so this small file themes every language.
+ICLS_COLORS = [("CARET_COLOR", "fg_1"), ("CARET_ROW_COLOR", "bg_1"),
+               ("GUTTER_BACKGROUND", "bg_0"), ("INDENT_GUIDE", "bg_2"),
+               ("LINE_NUMBERS_COLOR", "dim_0"),
+               ("SELECTION_BACKGROUND", "bg_2"), ("WHITESPACES", "bg_2")]
+ICLS_ATTRS = [("DEFAULT_LINE_COMMENT", "dim_0"),
+              ("DEFAULT_BLOCK_COMMENT", "dim_0"),
+              ("DEFAULT_DOC_COMMENT", "dim_0"),
+              ("DEFAULT_KEYWORD", "green"), ("DEFAULT_STRING", "cyan"),
+              ("DEFAULT_VALID_STRING_ESCAPE", "br_cyan"),
+              ("DEFAULT_NUMBER", "violet"), ("DEFAULT_CONSTANT", "violet"),
+              ("DEFAULT_FUNCTION_DECLARATION", "blue"),
+              ("DEFAULT_CLASS_NAME", "yellow"),
+              ("DEFAULT_INTERFACE_NAME", "yellow"),
+              ("DEFAULT_METADATA", "orange"), ("DEFAULT_TAG", "blue"),
+              ("DEFAULT_ATTRIBUTE", "green")]
+for variant, pal in palettes.items():
+    hx = lambda slot: pal[slot]["hex"][1:]
+    parent = "Default" if variant == "light" else "Darcula"
+    lines = [f'<scheme name="OkSelenized {variant}" version="142" '
+             f'parent_scheme="{parent}">', "  <colors>"]
+    lines += [f'    <option name="{n}" value="{hx(s)}"/>'
+              for n, s in ICLS_COLORS]
+    lines += ["  </colors>", "  <attributes>",
+              '    <option name="TEXT">', "      <value>",
+              f'        <option name="FOREGROUND" value="{hx("fg_0")}"/>',
+              f'        <option name="BACKGROUND" value="{hx("bg_0")}"/>',
+              "      </value>", "    </option>"]
+    for n, s in ICLS_ATTRS:
+        lines += [f'    <option name="{n}">', "      <value>",
+                  f'        <option name="FOREGROUND" value="{hx(s)}"/>',
+                  "      </value>", "    </option>"]
+    lines += ["  </attributes>", "</scheme>", ""]
+    with open(os.path.join(confdir, f"okselenized-{variant}.icls"), "w",
+              newline="\n") as f:
+        f.write("\n".join(lines))
+
+print("\nwrote okselenized-{dark,black,light}.json, preview.html,\n"
+      "configurations/{minttyrc,icls} per variant, "
+      "configurations/windows-terminal.json")

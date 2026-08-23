@@ -54,10 +54,9 @@ br_red, br_green, br_yellow, br_blue, br_magenta, br_cyan, fg_1`
   `python3 apply.py {black|dark|light}`; run without arguments to list the
   available variants (no config edits; resets with a new tab — handy for
   A/B-ing the variants live).
-- `okselenized-{dark,black,light}.minttyrc` — generated mintty color schemes
-  for Cygwin/MSYS2 (see below).
-- `okselenized.rc` — app tweaks to source from your shell rc (see below).
-- `aptitude.config` — aptitude styles for `~/.aptitude/config` (see below).
+- `configurations/` — per-application configs, generated (mintty, Windows
+  Terminal, IntelliJ) and hand-maintained (oh-my-bash, mc/newt, aptitude);
+  see [configurations/README.md](configurations/README.md).
 
 Regenerate everything with:
 
@@ -71,11 +70,16 @@ push that touches `okselenized.py` and commits the result.
 
 ## Tuning
 
-Two knobs at the top of `okselenized.py`:
+Each entry in the `VARIANTS` table of `okselenized.py` carries its own
+knobs:
 
-- `ACCENT_L` (67.0) — uniform accent lightness. Raising it gives airier
-  accents but shrinks the sRGB gamut for red/magenta (chroma gets clamped).
-- `BR_DELTA` (4.5) — lightness gap of the bright tier.
+- `accent_l` — uniform accent lightness (67 dark / 65 black / 58 light).
+  Raising it gives airier accents but shrinks the sRGB gamut for
+  red/magenta (chroma gets clamped).
+- `br_delta` — lightness gap of the bright tier (negative on light:
+  "brighter" means more contrast there, i.e. darker).
+- `chroma_scale`, `floors` — accent saturation and the WCAG minimums the
+  self-checks enforce.
 
 ## Testing on a real terminal
 
@@ -91,61 +95,22 @@ Two knobs at the top of `okselenized.py`:
    verify: bright slots render as brighter accents (not gray), green reads
    as green rather than olive, and comments (`dim_0`) stay legible.
 
-### Cygwin / MSYS2 (mintty)
-
-For the running session, `python3 apply.py {black|dark|light}` works as-is —
-mintty supports the OSC sequences. To make one variant permanent, append its
-minttyrc to your config:
-
-```sh
-cat okselenized-dark.minttyrc >> ~/.minttyrc
-```
-
-New mintty windows pick it up on start.
-
 ## Configuration for apps
 
-Most apps need nothing — they use ANSI colors as foregrounds and just work.
-A few use accent colors as large backgrounds and need a nudge; these
-settings live in `okselenized.rc`, source it from your shell rc:
-
-```sh
-. /path/to/okselenized.rc
-```
-
-- **mc** — the default skin paints panels with ANSI blue as background
-  (glaring with any lightness-normalized palette, Selenized included).
-  `okselenized.rc` sets `MC_SKIN=modarcon16-defbg`, which uses the 16
-  terminal colors on the terminal's own background.
-- **newt/whiptail** (debconf, needrestart, …) — dialogs default to
-  white-on-blue. `okselenized.rc` sets `NEWT_COLORS` remapped onto this
-  palette's slot semantics (adapted from
-  [selenized#130](https://github.com/jan-warchol/selenized/issues/130)).
-  Test with `whiptail --msgbox test 10 40`.
-- **oh-my-bash** — `okselenized.theme.sh` is a prompt theme based on
-  [duru](https://github.com/ohmybash/oh-my-bash/wiki/Themes#copied-duru),
-  showing the full working directory instead of the last two components.
-  Colors are ANSI slots, so it follows the applied variant. Install:
-
-  ```sh
-  mkdir -p ~/.oh-my-bash/custom/themes/okselenized
-  cp okselenized.theme.sh ~/.oh-my-bash/custom/themes/okselenized/
-  # then in ~/.bashrc: OSH_THEME="okselenized"
-  ```
-
-- **aptitude** — defaults to white-on-blue menu/header bars, ~1.2:1
-  contrast here ([selenized#32](https://github.com/jan-warchol/selenized/issues/32)).
-  Can't be fixed via environment: copy `aptitude.config` to
-  `~/.aptitude/config` (or merge it into your existing one).
+Per-application configs — terminal emulators (mintty, Windows Terminal),
+editors (IntelliJ), prompt (oh-my-bash) and TUI apps (mc, newt/whiptail,
+aptitude) — live in [`configurations/`](configurations/), each with its
+howto in [configurations/README.md](configurations/README.md).
 
 ## Status / not yet done
 
 - Variants: dark, black and light exist; Selenized's **white**
   (pure-white background, maximum contrast) would be one more entry in the
   `VARIANTS` table.
-- Shipped so far: live application via `apply.py` (any OSC-capable terminal)
-  and a mintty config. Static configs for foot / alacritty / kitty and
-  editor themes (vim, VS Code, …) are not written yet — all derivable from
+- Shipped so far: live application via `apply.py` (any OSC-capable
+  terminal) and the configs under `configurations/`. Static configs for
+  foot / alacritty / kitty, a full Notepad++ theme, and editor themes
+  (vim, VS Code, …) are not written yet — all derivable from
   `okselenized-dark.json`.
 
 ## Credits
