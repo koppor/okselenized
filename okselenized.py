@@ -108,6 +108,28 @@ def wcag(fg_hex, bg_hex):
     l1, l2 = sorted((lum(fg_hex), lum(bg_hex)), reverse=True)
     return (l1 + 0.05) / (l2 + 0.05)
 
+# Reference palette for side-by-side comparison in preview.html only
+# (sainnhe/everforest, MIT, medium contrast; hex hand-copied from its
+# palette.md). Everforest has one accent set (no bright tier) and no
+# violet/magenta split, so br_* duplicate the base accents and violet/
+# magenta both map to its purple — visible in the preview by design.
+EVERFOREST = {
+    "dark": dict(bg_0="#2d353b", bg_1="#343f44", bg_2="#3d484d",
+                 dim_0="#859289", fg_0="#d3c6aa", fg_1="#d3c6aa",
+                 red="#e67e80", orange="#e69875", yellow="#dbbc7f",
+                 green="#a7c080", cyan="#83c092", blue="#7fbbb3",
+                 violet="#d699b6", magenta="#d699b6"),
+    "light": dict(bg_0="#fdf6e3", bg_1="#f4f0d9", bg_2="#efebd4",
+                  dim_0="#939f91", fg_0="#5c6a72", fg_1="#5c6a72",
+                  red="#f85552", orange="#f57d26", yellow="#dfa000",
+                  green="#8da101", cyan="#35a77c", blue="#3a94c5",
+                  violet="#df69ba", magenta="#df69ba"),
+}
+EVERFOREST = {v: {n: {"hex": h} for n, h in pal.items()}
+              for v, pal in EVERFOREST.items()}
+for pal in EVERFOREST.values():
+    pal.update(("br_" + n, pal[n]) for n in ACCENT_HUES)
+
 # ---- build ------------------------------------------------------------------
 def build(spec):
     palette = {}
@@ -130,6 +152,21 @@ def check(palette, spec):
         d = palette["br_" + n]["oklch"][0] - palette[n]["oklch"][0]
         assert d * sign > 0, "bright tier on wrong side"
     assert len(set(ANSI)) == 16 and all(n in palette for n in ANSI)
+
+def preview_block(title, p):
+    bg = p["bg_0"]["hex"]
+    sw = "".join(
+        f'<div class="sw"><span style="background:{v["hex"]}"></span>{n}'
+        f'<code>{v["hex"]}</code></div>' for n, v in p.items()
+        if not (n.startswith("br_") and v is p[n[3:]]))
+    return f"""<div><h2>{title}</h2>
+<pre style="background:{bg};color:{p['fg_0']['hex']};padding:1em">
+<span style="color:{p['dim_0']['hex']}"># comment: ls output below uses normal + bright ANSI slots</span>
+<span style="color:{p['blue']['hex']}">drwxr-xr-x</span>  <span style="color:{p['br_blue']['hex']}">bin/</span>   <span style="color:{p['green']['hex']}">OK</span> <span style="color:{p['br_green']['hex']}">OK-bright</span>
+<span style="color:{p['red']['hex']}">error:</span> <span style="color:{p['br_red']['hex']}">bright error</span>  <span style="color:{p['yellow']['hex']}">warn</span> <span style="color:{p['br_yellow']['hex']}">bright warn</span>
+<span style="color:{p['magenta']['hex']}">magenta</span> <span style="color:{p['violet']['hex']}">violet</span> <span style="color:{p['cyan']['hex']}">cyan</span> <span style="color:{p['orange']['hex']}">orange</span>
+<span style="color:{p['fg_1']['hex']};font-weight:bold">emphasized text</span> on bg_0
+</pre>{sw}</div>"""
 
 here = os.path.dirname(os.path.abspath(__file__))
 confdir = os.path.join(here, "configurations")
@@ -160,23 +197,17 @@ for variant, spec in VARIANTS.items():
         print(f"{name:12} {v['hex']:>8}   {L:5.1f} {C:6.3f} {H:6.1f}"
               f"   {wcag(v['hex'], bg):12.2f}")
 
-    sw = "".join(
-        f'<div><span style="background:{v["hex"]}"></span>{n}'
-        f'<code>{v["hex"]}</code></div>' for n, v in palette.items())
-    p = palette
-    previews.append(f"""<h2>OkSelenized {variant}</h2>
-<pre style="background:{bg};color:{p['fg_0']['hex']};padding:1em">
-<span style="color:{p['dim_0']['hex']}"># comment: ls output below uses normal + bright ANSI slots</span>
-<span style="color:{p['blue']['hex']}">drwxr-xr-x</span>  <span style="color:{p['br_blue']['hex']}">bin/</span>   <span style="color:{p['green']['hex']}">OK</span> <span style="color:{p['br_green']['hex']}">OK-bright</span>
-<span style="color:{p['red']['hex']}">error:</span> <span style="color:{p['br_red']['hex']}">bright error</span>  <span style="color:{p['yellow']['hex']}">warn</span> <span style="color:{p['br_yellow']['hex']}">bright warn</span>
-<span style="color:{p['magenta']['hex']}">magenta</span> <span style="color:{p['violet']['hex']}">violet</span> <span style="color:{p['cyan']['hex']}">cyan</span> <span style="color:{p['orange']['hex']}">orange</span>
-<span style="color:{p['fg_1']['hex']};font-weight:bold">emphasized text</span> on bg_0
-</pre>{sw}""")
+    row = preview_block(f"OkSelenized {variant}", palette)
+    if variant in EVERFOREST:
+        row += preview_block(f"Everforest {variant} (medium) — reference",
+                             EVERFOREST[variant])
+    previews.append(f'<div style="display:flex;gap:2em;flex-wrap:wrap">'
+                    f"{row}</div>")
 
 with open(os.path.join(here, "preview.html"), "w", newline="\n") as f:
     f.write("""<title>OkSelenized</title>
 <style>body{font-family:monospace;background:#1a1a1a;color:#ccc;margin:2em}
-div span{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margin-right:.6em}
+.sw span{display:inline-block;width:3em;height:1.4em;vertical-align:middle;margin-right:.6em}
 code{margin-left:.6em;color:#888}</style>
 """ + "".join(previews))
 

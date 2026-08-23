@@ -5,6 +5,13 @@
 [OkSolar](https://meat.io/oksolar) would have been if it had started from
 Selenized instead of [Solarized](https://ethanschoonover.com/solarized/).
 
+> **Alternative:** [Everforest](https://github.com/sainnhe/everforest/) — a
+> hand-picked warm "forest" palette with dark+light variants (three contrast
+> levels each) and ports to nearly every editor and terminal. Different
+> philosophy: mood over system — softer, but no bright ANSI tier, narrower
+> hue separation, and its light accents sit below 3:1 contrast.
+> `preview.html` renders both side by side.
+
 Motivation: [jan-warchol/selenized#121](https://github.com/jan-warchol/selenized/issues/121).
 Analysis showed OkSolar keeps only one of Selenized's improvements over
 Solarized (uniform accent lightness — and that one it does *better*, in Oklab).
