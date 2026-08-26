@@ -102,6 +102,10 @@ Can't be fixed via environment: copy `aptitude.config` to
 
 - **Windows Explorer** — follows the system light/dark mode and single
   accent color only; closest match: dark mode + accent `#5097ef`.
+- **Windows taskbar** — "Show accent color on Start and taskbar" is only
+  offered in dark system mode; in light mode the taskbar is a fixed grey.
+  Workaround: [TranslucentTB](https://github.com/TranslucentTB/TranslucentTB)
+  (Microsoft Store) paints it any hex, e.g. `#fcf3db` for light.
 - **OneNote** — Office theme switch and a fixed page-color palette only.
 - **SumatraPDF** — partial: `Settings → Advanced Options` supports
   `MainWindowBackground = #1c3b44` and a reading mode via
